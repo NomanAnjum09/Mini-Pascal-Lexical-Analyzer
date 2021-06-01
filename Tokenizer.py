@@ -17,47 +17,49 @@ class Tokenizer():
 
 
     def tokenize(self,code_path):
-        file1 = open(code_path,'rb')
+        file1 = open(code_path,'rb')  # Read file from path
 
-        lines = file1.read()
-        s=str(lines,'utf-8')
+        lines = file1.read() 
+        s=str(lines,'utf-8') # Convert to string from bytes
         lines = StringIO(s) 
-        for line in lines:
+        for line in lines: #Traverse Each Line
             self.current_line+=1
             lexeme = ""
             self.current_position = -1
             i=0
-            while i !=(len(line)):
-                self.current_position+=1
-                if line[i] == '"':
+            while i !=(len(line)): # Traverse each character in line
+                self.current_position+=1 # Set current position to 1
+                if line[i] == '"': ## String Const Detected
                     if(len(lexeme)>0):
-                        self.process_token(lexeme,line)
+                        self.process_token(lexeme,line) # Process any holded lexeme
                         lexeme=""
-                    i = self.parseStringConst(line,i)
+                    i = self.parseStringConst(line,i) # Process String Const
                     
-                if(line[i] in self.delimeter) and len(lexeme)>0:
+                if(line[i] in self.delimeter) and len(lexeme)>0: ## Lexeme completion detected
                     self.process_token(lexeme,line)
                     lexeme=""
-                elif line[i:i+2] in self.symbols:
+                elif line[i:i+2] in self.symbols: # Two character symbol Detected
                     if(len(lexeme)>0):
-                        self.process_token(lexeme,line)
+                        self.process_token(lexeme,line) # process holded lexeme
                         lexeme=""
                     self.current_position+=2
-                    self.process_token(line[i:i+2],line,"Symbol")
+                    self.process_token(line[i:i+2],line,"Symbol") # process two character symbol
                     i+=1
-                elif(line[i] in self.symbols):
+                elif(line[i] in self.symbols): # 1 character symbol detected
                     if(len(lexeme)>0):
-                        self.process_token(lexeme,line)
+                        self.process_token(lexeme,line) #process holded lexeme
                         lexeme=""
                         self.current_position+=1
-                    self.process_token(line[i],line,"Symbol")
+                    self.process_token(line[i],line,"Symbol") # process one character symbol
                 
                 elif line[i] not in [" ","\n",""]:
                     lexeme += line[i]
                 i+=1
             if len(lexeme)>0:
-                self.process_token(lexeme,"")
-    def parseStringConst(self,line,i):
+                self.process_token(lexeme,"") # Process Last token
+
+
+    def parseStringConst(self,line,i): # Parse string untill closing " is found
        
         i+=1
         lexeme = ""
@@ -75,10 +77,12 @@ class Tokenizer():
 
     def process_token(self, lexeme,line,token_type=None):
         if token_type is None:
-            token_type = self.lookup(lexeme,line)
+            token_type = self.lookup(lexeme,line) #lookup for token type
             self.token_database+=token_type+","+lexeme+","+str(self.current_line)+","+str(self.current_position-len(lexeme)+1)+"\n"
         else:
             self.token_database+=token_type+","+lexeme+","+str(self.current_line)+","+str(self.current_position-len(lexeme)+1)+"\n"
+    
+    
     def lookup(self, lexeme,line):
         
         if lexeme in self.keywords:
@@ -88,26 +92,23 @@ class Tokenizer():
             self.previos_lexeme = lexeme
             return "Symbol"
 
-        else:
-            token_type = self.matchRegex(lexeme,line)
+        else: # Not a symbol or keyword
+            token_type = self.matchRegex(lexeme,line) # match regex to find if Int real or identfier
             self.previos_lexeme = lexeme
             return token_type
 
 
     def matchRegex(self, lexeme,line):
-        string = '".*"'
         number = "[0-9]+"
         real = "[0-9]\.[0-9]+"
 
-        # if re.match(string,lexeme):
-        #     return "StringConst"
         if re.match(real,lexeme):
             return "RealConst"
         if re.match(number,lexeme):
             return "IntConst"
         
         else:
-            self.registerIdentifier(lexeme,line)
+            self.registerIdentifier(lexeme,line) # Register identfier on symbol table
             return "Identifier"
 
 
